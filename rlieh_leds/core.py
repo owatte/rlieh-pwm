@@ -4,10 +4,22 @@
     This module provides an interface to manage light using leds and PWM.
 
     This module is a part of the RLIEH project.
+
+    The PWM uses the pi-blaster driver, so the PWM value should be incuded in a
+    range from 0 to 1, with 3 digits.
+
+    Usage:
+
+    >>> from core import RliehLeds
+    >>> light = RliehLeds(pin=18)
+    >>> light.pwm = 0.420
 """
+
 import re
 import os
 from subprocess import call
+
+__all__ = ['RliehLeds']
 
 class RliehLeds(object):
     """This class manages leds intensity using PWM pi-blaster interface.
@@ -19,13 +31,15 @@ class RliehLeds(object):
         - pwm (float): PWM value (between 0 and 1, 3 digits eg. 0.042).
     """
 
-    def __init__(self, pin=18):
+    def __init__(self, pin=18, pwm=None):
         """Sets up the Raspberry Pi GPIOs and sets the working directory.
         Args:
             pin (int): Raspberry Pi's gpio used for PWM.
         """
         self.pin = pin
         self.blaster = '/dev/pi-blaster'
+        if not pwm == None:
+            self.pwm = pwm
 
     @property
     def pwm(self):
@@ -60,6 +74,4 @@ class RliehLeds(object):
 
 
 if __name__ == '__main__':
-    bitin = RliehLeds()
-    print bitin.pwm
-    bitin.pwm = 22
+    bitin = RliehLeds(pin=18, pwm=1)
