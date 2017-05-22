@@ -1,3 +1,13 @@
+# @Author: Olivier Watté <user>
+# @Date:   2017-04-26T04:39:06-04:00
+# @Email:  owatte@ipeos.com
+# @Last modified by:   user
+# @Last modified time: 2017-05-04T16:32:24-04:00
+# @License: GPLv3
+# @Copyright: IPEOS I-Solutions
+
+
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -25,9 +35,7 @@ setup(
         "Topic :: Scientific/Engineering",
     ],
     entry_points = {
-        'console_scripts': [
-            'rlieh-leds = rlieh_leds.cli',
-        ],
+        'console_scripts': ['rlieh-leds=rlieh_leds.cli:main'],
     },
     install_requires=[
           'docopt',

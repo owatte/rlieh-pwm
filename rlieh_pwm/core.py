@@ -1,28 +1,43 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# @Author: Olivier Watté <user>
+# @Date:   2017-04-26T04:39:06-04:00
+# @Email:  owatte@ipeos.com
+# @Last modified by:   user
+# @Last modified time: 2017-05-22T09:41:42-04:00
+# @License: GPLv3
+# @Copyright: IPEOS I-Solutions
+
+
 """
-    This module provides an interface to manage light using leds and PWM.
+    This module provides an interface to manage PWM on RLIEH systems.
 
     This module is a part of the RLIEH project.
 
-    The PWM uses the pi-blaster driver, so the PWM value should be incuded in a
-    range from 0 to 1, with 3 digits.
+    The PWM value is a percentage of the total available power:
+        - 0 = off
+        - 100 = 100%
+    The PWM value is a float with 2 decimal points.
+        eg. 42.42
+
+    Note : The default Raspberry Pi Leds pin for RLIEH Systems is pin 18
 
     Usage:
 
-    >>> from core import RliehLeds
-    >>> light = RliehLeds(pin=18)
-    >>> light.pwm = 0.420
+    >>> from core import RliehPWM
+    >>> light = RliehPWM(pin=18)
+    >>> light.pwm = 42.42
 """
 
 import re
-import os
 from subprocess import call
 
-__all__ = ['RliehLeds']
+__all__ = ['RliehPWM']
 
-class RliehLeds(object):
-    """This class manages leds intensity using PWM pi-blaster interface.
+class RliehPWM(object):
+    """This class manages PWM intensity on a RLIEH system build over a Raspberry Pi .
+
 
     Attributes:
         - pin (int): Raspberry Pi's gpio used for PWM.
@@ -74,4 +89,5 @@ class RliehLeds(object):
 
 
 if __name__ == '__main__':
-    bitin = RliehLeds(pin=18, pwm=1)
+    bitin = RliehPWM(pin=18, pwm=1)
+    print('bitin-bagai')
