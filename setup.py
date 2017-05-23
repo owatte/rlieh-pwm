@@ -2,7 +2,7 @@
 # @Date:   2017-04-26T04:39:06-04:00
 # @Email:  owatte@ipeos.com
 # @Last modified by:   user
-# @Last modified time: 2017-05-04T16:32:24-04:00
+# @Last modified time: 2017-05-22T15:38:07-04:00
 # @License: GPLv3
 # @Copyright: IPEOS I-Solutions
 
@@ -16,7 +16,7 @@ from setuptools import setup, find_packages
 import rlieh_leds
 
 setup(
-    name='rlieh_leds',
+    name='rlieh_pwm',
     version=rlieh_leds.__version__,
     packages=find_packages(),
     author="Olivier Watté - RLIEH project",
@@ -35,7 +35,7 @@ setup(
         "Topic :: Scientific/Engineering",
     ],
     entry_points = {
-        'console_scripts': ['rlieh-leds=rlieh_leds.cli:main'],
+        'console_scripts': ['rlieh-pwm=rlieh_pwm.cli:main'],
     },
     install_requires=[
           'docopt',

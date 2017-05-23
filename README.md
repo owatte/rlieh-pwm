@@ -1,9 +1,8 @@
-# RLIEH Leds
+# RLIEH PWM
 
-This module is intended to provide an interface to manage light-system in closed
-ecosystem using leds and PWM.
+This module is intended to provide an interface to manage PWM on RLIEH systems.
 
-This module is a part of the RLIEH project.
+rlieh-pwm is a part of the RLIEH project and can be used on Raspberry Pi.
 
 ## Prerequiristies
 

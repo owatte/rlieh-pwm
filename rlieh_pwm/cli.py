@@ -5,7 +5,7 @@
 # @Date:   2017-04-26T04:42:30-04:00
 # @Email:  owatte@ipeos.com
 # @Last modified by:   user
-# @Last modified time: 2017-05-22T09:46:10-04:00
+# @Last modified time: 2017-05-22T18:21:53-04:00
 # @License: GPLv3
 # @Copyright: IPEOS I-Solutions
 
@@ -43,7 +43,7 @@ from __future__ import absolute_import
 from time import sleep
 from docopt import docopt
 # from rlieh_leds.core import RliehLeds
-# from core import RliehPWM
+from .core import RliehPWM
 
 class MyLeds(RliehPWM):
     def __init__(self, pin):

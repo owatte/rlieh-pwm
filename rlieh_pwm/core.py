@@ -5,7 +5,7 @@
 # @Date:   2017-04-26T04:39:06-04:00
 # @Email:  owatte@ipeos.com
 # @Last modified by:   user
-# @Last modified time: 2017-05-22T15:28:07-04:00
+# @Last modified time: 2017-05-22T19:05:14-04:00
 # @License: GPLv3
 # @Copyright: IPEOS I-Solutions
 
@@ -54,40 +54,52 @@ class RliehPWM(object):
 
     def __init__(self, pin=18, pwm=None,
                  log_level='debug', log_filepath='/home/pi/log/rlieh.log',
-                 log_formatter='%(name)-12s: %(levelname)-8s %(message)s'
+                 #  log_formatter='%(name)-12s: %(levelname)-8s %(message)s',
+                 log_formatter='%(levelname)s:%(message)s',
                  verbose=False):
         """Sets up the Raspberry Pi GPIOs and sets the working directory.
         Args:
             pin (int): Raspberry Pi's gpio used for PWM.
         """
-        self.pin = pin
-        self.blaster = '/dev/pi-blaster'
-        if not pwm == None:
-            self.pwm = pwm
 
-        LOG_LEVELS = {
-            'debug': logging.DEBUG,
-            'info': logging.INFO,
-            'warning': logging.WARNING,
-            'error': logging.ERROR,
-            'critical': logging.CRITICAL,
+        # gpio numbers working with pwm using pi-blaster
+        BCM_PINS = [3, 5, 7, 8, 10, 11, 12, 13, 15, 16, 18, 19, 21, 22, 23, 24,
+                    26, 27, 28, 29, 31, 32, 33, 35, 36, 37, 38, 40]
+        LOG_LEVELS = {'debug': logging.DEBUG,
+                      'info': logging.INFO,
+                      'warning': logging.WARNING,
+                      'error': logging.ERROR,
+                      'critical': logging.CRITICAL
         }
         # Logger
         self.logger = logging.getLogger('rlieh')
-        self.logger.setFormatter(log_formatter)
         # Logger file handler
-        log_fh(logging.FileHandler('log_filepath'))
+        log_fh = logging.FileHandler('log_filepath')
         log_fh.setLevel(LOG_LEVELS.get(log_level, logging.NOTSET))
+        log_fh.setFormatter(log_formatter)
         self.logger.addHandler(log_fh)
         # Logger console handler
-        self.log_ch.StreamHandler()
+        log_ch = logging.StreamHandler()
         if not verbose:
-            self.log_ch.setLevel(logging.ERROR)
+            log_ch.setLevel(logging.ERROR)
         else:
-            self.log_ch.setLevel(logging.INFO)
+            log_ch.setLevel(logging.INFO)
+        log_ch.setFormatter(log_formatter)
         self.logger.addHandler(log_ch)
 
-
+        self.blaster = '/dev/pi-blaster'
+        # for pinz in BCM_PINS:
+        #     print(pinz)
+        # print('<<<<', pin, '>>>>>> ',type(pin))
+        if not(int(pin) in BCM_PINS):
+            BCM_PINS = [str(bcm_pin) for bcm_pin in BCM_PINS]
+            logging.critical(_('Pin number must be in : {}. (was {})'.\
+                               format(', '.join(BCM_PINS), str(pin))))
+            raise ValueError
+        else:
+            self.pin = pin
+        if not pwm == None:
+            self.pwm = pwm
 
     @property
     def pwm(self):
@@ -115,11 +127,12 @@ class RliehPWM(object):
         Args:
             percent : amount of power, number between 0 and 100 (float, 2 decimal point)
         '''
+        percent = float(percent)
         if percent < 0:
-            logging.critical(_('PWM value must be greater or equal to 0. (was {})'.format(value)))
+            logging.critical(_('PWM value must be greater or equal to 0. (was {})'.format(percent)))
             raise ValueError
         elif percent > 100:
-            logging.critical(_('PWM value must be lower or equal to 100. (was {})'.format(value)))
+            logging.critical(_('PWM value must be lower or equal to 100. (was {})'.format(percent)))
             raise ValueError
         else:
             value = int(round(percent * 10))
