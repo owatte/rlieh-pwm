@@ -5,18 +5,18 @@
 # @Date:   2017-04-26T04:39:06-04:00
 # @Email:  owatte@ipeos.com
 # @Last modified by:   user
-# @Last modified time: 2017-05-23T12:38:12-04:00
+# @Last modified time: 2017-05-23T12:40:02-04:00
 # @License: GPLv3
 # @Copyright: IPEOS I-Solutions
 
 
 from setuptools import setup, find_packages
 
-import rlieh_leds
+import rlieh_pwm
 
 setup(
     name='rlieh_pwm',
-    version=rlieh_leds.__version__,
+    version=rlieh_pwm.__version__,
     packages=find_packages(),
     author="Olivier Watté - RLIEH project",
     author_email="owatte@lebiklab.com",
