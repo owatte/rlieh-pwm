@@ -5,7 +5,7 @@
 # @Date:   2017-04-26T04:39:06-04:00
 # @Email:  owatte@ipeos.com
 # @Last modified by:   user
-# @Last modified time: 2017-05-22T19:05:14-04:00
+# @Last modified time: 2017-06-18T19:54:43-04:00
 # @License: GPLv3
 # @Copyright: IPEOS I-Solutions
 
@@ -136,6 +136,7 @@ class RliehPWM(object):
             raise ValueError
         else:
             value = int(round(percent * 10))
+        print value
         blaster = '{0}={1}'.format(self.pin, value)
         cmd = "echo " + blaster + " > " + self.blaster
         self.logger.debug('pin: {}'.format(self.pin))
