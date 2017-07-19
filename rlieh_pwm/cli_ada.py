@@ -1,3 +1,13 @@
+# @Author: Olivier Watté <user>
+# @Date:   2017-06-26T08:59:17-04:00
+# @Email:  owatte@ipeos.com
+# @Last modified by:   user
+# @Last modified time: 2017-07-19T11:36:00-04:00
+# @License: GPLv3
+# @Copyright: IPEOS I-Solutions
+
+
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -29,9 +39,9 @@ RLIEH puts a roXXXing poney in your aquarium and greenhouses
 
 from time import sleep
 from docopt import docopt
-from rlieh_leds.core import RliehLeds
+from rlieh_pwm.core import RliehPWM
 
-class MyLeds(RliehLeds):
+class MyLeds(RliehPWM):
     def __init__(self, pin):
         super(MyLeds, self).__init__(pin=pin)
 
