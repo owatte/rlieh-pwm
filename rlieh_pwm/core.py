@@ -5,7 +5,7 @@
 # @Date:   2017-04-26T04:39:06-04:00
 # @Email:  owatte@ipeos.com
 # @Last modified by:   user
-# @Last modified time: 2017-07-19T11:47:08-04:00
+# @Last modified time: 2017-07-24T12:39:15-04:00
 # @License: GPLv3
 # @Copyright: IPEOS I-Solutions
 
@@ -30,6 +30,8 @@
     >>> light.pwm = 42.42
 """
 import logging
+import logging.config
+import os
 import re
 from subprocess import call
 import gettext
@@ -39,10 +41,12 @@ gettext.bindtextdomain('rlieh', 'locale')
 gettext.textdomain('rlieh')
 _ = gettext.gettext
 
+
 __all__ = ['RliehPWM']
 
+
 class RliehPWM(object):
-    """This class manages PWM intensity on a RLIEH system build over a Raspberry Pi .
+    """This class manages PWM on a RLIEH system build over a Raspberry Pi .
 
 
     Attributes:
@@ -53,10 +57,7 @@ class RliehPWM(object):
     """
 
     def __init__(self, pin=18, pwm=None,
-                 log_level='debug', log_filepath='/home/pi/log/rlieh.log',
-                 #  log_formatter='%(name)-12s: %(levelname)-8s %(message)s',
-                 log_formatter='%(levelname)s:%(message)s',
-                 verbose=False):
+                 log_level='DEBUG', log_path='/home/pi/log'):
         """Sets up the Raspberry Pi GPIOs and sets the working directory.
         Args:
             pin (int): Raspberry Pi's gpio used for PWM.
@@ -65,60 +66,93 @@ class RliehPWM(object):
         # gpio numbers working with pwm using pi-blaster
         BCM_PINS = [3, 5, 7, 8, 10, 11, 12, 13, 15, 16, 18, 19, 21, 22, 23, 24,
                     26, 27, 28, 29, 31, 32, 33, 35, 36, 37, 38, 40]
-        LOG_LEVELS = {'debug': logging.DEBUG,
-                      'info': logging.INFO,
-                      'warning': logging.WARNING,
-                      'error': logging.ERROR,
-                      'critical': logging.CRITICAL
-        }
+
         # Logger
-        self.logger = logging.getLogger('rlieh')
-        # Logger file handler
-        log_fh = logging.FileHandler('log_filepath')
-        log_fh.setLevel(LOG_LEVELS.get(log_level, logging.NOTSET))
-        log_fh.setFormatter(log_formatter)
-        self.logger.addHandler(log_fh)
-        # Logger console handler
-        log_ch = logging.StreamHandler()
-        if not verbose:
-            log_ch.setLevel(logging.ERROR)
-        else:
-            log_ch.setLevel(logging.INFO)
-        log_ch.setFormatter(log_formatter)
-        self.logger.addHandler(log_ch)
+        self.logger = logging.getLogger(__name__)
+        DEFAULT_LOGGING = {
+            'version': 1,
+            'disable_existing_loggers': False,
+            'formatters': {
+                'basic': {
+                    'format': '%(asctime)-6s: %(name)s - %(levelname)s - %(message)s',
+                }
+            },
+            'handlers': {
+                'console': {
+                    'level': 'DEBUG',
+                    'class': 'logging.StreamHandler',
+                    'formatter': 'basic',
+                },
+                'main_file': {
+                    'level': 'INFO',
+                    'filter': 'WARNING',
+                    'class': 'logging.handlers.WatchedFileHandler',
+                    'formatter': 'basic',
+                    'filename': os.path.join(log_path, 'pwm.log'),
+                },
+                'error_file': {
+                    'level': 'ERROR',
+                    'class': 'logging.handlers.WatchedFileHandler',
+                    'formatter': 'basic',
+                    'filename': os.path.join(log_path, 'pwm_error.log'),
+                }
+            },
+            'loggers': {
+                'foo.bar': {
+                    'handlers': ['console', 'main_file', 'error_file'],
+                    'level': log_level,
+                    'propagate': False
+                },
+            },
+            'root': {
+                'handlers': ['console', 'main_file', 'error_file'],
+                'level': log_level,
+            }
+        }
+        logging.config.dictConfig(DEFAULT_LOGGING)
 
         self.blaster = '/dev/pi-blaster'
-        # for pinz in BCM_PINS:
-        #     print(pinz)
-        # print('<<<<', pin, '>>>>>> ',type(pin))
         if not(int(pin) in BCM_PINS):
             BCM_PINS = [str(bcm_pin) for bcm_pin in BCM_PINS]
-            logging.critical(_('Pin number must be in : {}. (was {})'.\
+            logging.critical(_('Pin number must be in : {}. (was {})'.
                                format(', '.join(BCM_PINS), str(pin))))
             raise ValueError
         else:
             self.pin = pin
-        if not pwm == None:
+        if pwm is not None:
             self.pwm = pwm
 
     @property
     def pwm(self):
         '''get pwm value for the given pin.'''
-
+        pass
         pattern = r'{0}=[.0-9]+'.format(self.pin)
         blaster_file = open(self.blaster, 'r')
         blaster = blaster_file.read()
         blaster_file.close()
-        try:
-            ok = re.search(
-                pattern,
-                blaster,
-                re.DOTALL
-            )
+
+        ok = re.search(
+            pattern,
+            blaster,
+            re.DOTALL
+        )
+        if ok:
             pwm = ok.group(0).split('=')[1]
-        except:
+        else:
             pwm =  0
         return pwm
+        #
+        #
+        # try:
+        #     ok = re.search(
+        #         pattern,
+        #         blaster,
+        #         re.DOTALL
+        #     )
+        #     pwm = ok.group(0).split('=')[1]
+        # except:
+        #     pwm =  0
+        # return pwm
 
     @pwm.setter
     def pwm(self, percent):
@@ -135,8 +169,7 @@ class RliehPWM(object):
             logging.critical(_('PWM value must be lower or equal to 100. (was {})'.format(percent)))
             raise ValueError
         else:
-            value = percent / 100.
-        # print (percent, value)
+            value = round(percent / 100., 4)
         blaster = '{0}={1}'.format(self.pin, value)
         cmd = "echo " + blaster + " > " + self.blaster
         self.logger.debug('pin: {}'.format(self.pin))
@@ -147,4 +180,13 @@ class RliehPWM(object):
 
 if __name__ == '__main__':
     bitin = RliehPWM(pin=18, pwm=1)
+    for i in range(1000, -1, -1):
+        print(i)
+        if i != 0 :
+            j = i/10.
+        else:
+            j = i
+        val = round(j / 100., 4)
+        print ("percent: ", j, " value: ", val)
+
     print('bitin-bagai')
