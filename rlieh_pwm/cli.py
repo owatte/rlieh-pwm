@@ -5,7 +5,7 @@
 # @Date:   2017-04-26T04:42:30-04:00
 # @Email:  owatte@ipeos.com
 # @Last modified by:   user
-# @Last modified time: 2017-07-24T04:39:30-04:00
+# @Last modified time: 2017-07-25T09:23:57-04:00
 # @License: GPLv3
 # @Copyright: IPEOS I-Solutions
 
@@ -13,13 +13,13 @@
 """PWM management for RLIEH systems:
 
 Usage:
-  light.py set VALUE GPIO
-  light.py (on|off) GPIO
-  light.py range BEGIN END --duration=<minutes> GPIO
-  light.py fx-light (--dawn|--sunrise|--noon|--sunset|--dusk)
+  rlieh-pwm (on|off) GPIO
+  rlieh-pwm set VALUE GPIO
+  rlieh-pwm range BEGIN END --duration=<minutes> GPIO
+  rlieh-pwm fx-light (--dawn|--sunrise|--noon|--sunset|--dusk)
            --duration=<minutes> GPIO
-  light.py (-h | --help)
-  light.py (-v |--version)
+  rlieh-pwm (-h | --help)
+  rlieh-pwm (-v |--version)
 
 Arguments:
   GPIO        Raspberry Pi GPIO pin
@@ -33,7 +33,7 @@ Options:
   --sunrise     smoothy light on, like during the sunrise
   --sunset      smoothy light off, like during the sunset
 
-Tip: use an alias to set a default GPIO (eg. alias light='light.py $@ 18')
+Tip: use an alias to set a default GPIO (eg. alias light='rlieh-pwm $@ 18')
 
 RLIEH puts a roXXXing poney in your aquarium and greenhouses
 """
