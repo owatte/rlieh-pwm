@@ -5,7 +5,7 @@
 # @Date:   2017-04-26T04:39:06-04:00
 # @Email:  owatte@ipeos.com
 # @Last modified by:   user
-# @Last modified time: 2017-07-24T12:39:15-04:00
+# @Last modified time: 2017-07-25T06:10:59-04:00
 # @License: GPLv3
 # @Copyright: IPEOS I-Solutions
 
@@ -85,7 +85,6 @@ class RliehPWM(object):
                 },
                 'main_file': {
                     'level': 'INFO',
-                    'filter': 'WARNING',
                     'class': 'logging.handlers.WatchedFileHandler',
                     'formatter': 'basic',
                     'filename': os.path.join(log_path, 'pwm.log'),
