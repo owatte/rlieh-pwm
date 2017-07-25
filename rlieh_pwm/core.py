@@ -5,7 +5,7 @@
 # @Date:   2017-04-26T04:39:06-04:00
 # @Email:  owatte@ipeos.com
 # @Last modified by:   user
-# @Last modified time: 2017-07-25T09:27:37-04:00
+# @Last modified time: 2017-07-25T10:55:21-04:00
 # @License: GPLv3
 # @Copyright: IPEOS I-Solutions
 
@@ -32,7 +32,8 @@
 import logging
 import logging.config
 import os
-import re
+from numpy import arange
+from time import sleep
 from subprocess import call
 import gettext
 
@@ -74,7 +75,8 @@ class RliehPWM(object):
             'disable_existing_loggers': False,
             'formatters': {
                 'basic': {
-                    'format': '%(asctime)-6s: %(name)s - %(levelname)s - %(message)s',
+                    'format': ('%(asctime)-6s: %(name)s - '
+                               '%(levelname)s - %(message)s'),
                 }
             },
             'handlers': {
@@ -118,51 +120,46 @@ class RliehPWM(object):
             raise ValueError
         else:
             self.pin = pin
-        if pwm is not None:
-            self.pwm = pwm
+            self.logger.debug('pin: {}'.format(self.pin))
+        self.__pwm = pwm
 
     @property
     def pwm(self):
         '''get pwm value for the given pin.'''
-        pass
-        pattern = r'{0}=[.0-9]+'.format(self.pin)
-        blaster_file = open(self.blaster, 'r')
-        blaster = blaster_file.read()
-        blaster_file.close()
 
-        ok = re.search(
-            pattern,
-            blaster,
-            re.DOTALL
-        )
-        if ok:
-            pwm = ok.group(0).split('=')[1]
-        else:
-            pwm =  0
-        return pwm
+        self.logger.debug('pwm: {}%'.format(self.__pwm))
+        return self.__pwm
 
     @pwm.setter
     def pwm(self, percent):
         '''set pwm value for the given pin.
 
         Args:
-            percent : amount of power, number between 0 and 100 (float, 2 decimal point)
+            percent : amount of power, number between 0 and 100 
+            (float, 2 decimal point)
         '''
         percent = float(percent)
         if percent < 0:
-            logging.critical(_('PWM value must be greater or equal to 0. (was {})'.format(percent)))
+            logging.critical(
+                _('PWM value must be greater or equal to 0. (was {})'
+                    .format(percent))
+            )
             raise ValueError
         elif percent > 100:
-            logging.critical(_('PWM value must be lower or equal to 100. (was {})'.format(percent)))
+            logging.critical(
+                _('PWM value must be lower or equal to 100. (was {})'
+                    .format(percent))
+            )
             raise ValueError
         else:
             value = round(percent / 100., 4)
         blaster = '{0}={1}'.format(self.pin, value)
         cmd = "echo " + blaster + " > " + self.blaster
-        self.logger.debug('pin: {}'.format(self.pin))
-        self.logger.debug('pwm value: {}'.format(value))
-        self.logger.info('{}: {}'.format(self.blaster, blaster))
+        # self.logger.debug('pin: {}'.format(self.pin))
+        # self.logger.debug('pwm value: {}'.format(value))
         call(cmd, shell=True)
+        self.logger.debug('{}: {}'.format(self.blaster, blaster))
+        self.__pwm = round(value * 100, 2)
 
     def range_modulation(self, begin, end, duration):
         '''Set modulation value from a range of values for a duration.
@@ -194,8 +191,7 @@ class RliehPWM(object):
         end += step
         steps = arange(begin, end, step)
         pause_time = self._get_avg_pause_time(duration, len(steps))
-        print (len(steps), pause_time)
-        for step in steps:
+        for step in steps[0:-1]:
             self.pwm = step
             sleep(pause_time)
 
@@ -210,16 +206,3 @@ class RliehPWM(object):
         '''
         avg_pause_time = float(duration) * 60. / steps
         return avg_pause_time
-
-if __name__ == '__main__':
-    bitin = RliehPWM(pin=18, pwm=1)
-    for i in range(1000, -1, -1):
-        print(i)
-        if i != 0 :
-            j = i/10.
-        else:
-            j = i
-        val = round(j / 100., 4)
-        print ("percent: ", j, " value: ", val)
-
-    print('bitin-bagai')
