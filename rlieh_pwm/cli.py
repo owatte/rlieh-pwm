@@ -5,7 +5,7 @@
 # @Date:   2017-04-26T04:42:30-04:00
 # @Email:  owatte@ipeos.com
 # @Last modified by:   user
-# @Last modified time: 2017-07-25T09:23:57-04:00
+# @Last modified time: 2017-07-25T09:27:41-04:00
 # @License: GPLv3
 # @Copyright: IPEOS I-Solutions
 
@@ -59,52 +59,6 @@ class MyLeds(RliehPWM):
         super(MyLeds, self).__init__(pin=pin)
         self.light_thresholds = light_thresholds
 
-    def range_modulation(self, begin, end, duration):
-        '''Set modulation value from a range of values for a duration.
-
-        Args:
-            begin (float): first range value
-            end (float): last range value
-            duration (float): total time of duration in minutes
-        Returns:
-            integer : average sleep time in seconds
-        '''
-        if begin == end:
-            error_msg = 'Range BEGIN and range START can\'t be equal. {}={}' \
-                      .format(begin, end)
-            raise ValueError(error_msg)
-        elif begin < 0:
-            error_msg = 'Range BEGIN must be greater or equal to 0. (was {})' \
-                      .format(begin)
-            raise ValueError(error_msg)
-        elif end > 1000:
-            error_msg = 'Range END must be lower or equal to 1000. (was {})' \
-                      .format(end)
-            raise ValueError(error_msg)
-
-        if end > begin:
-            step = 0.1
-        else:
-            step = -0.1
-        end += step
-        steps = arange(begin, end, step)
-        pause_time = self._get_avg_pause_time(duration, len(steps))
-        print (len(steps), pause_time)
-        for step in steps:
-            self.pwm = step
-            sleep(pause_time)
-
-    def _get_avg_pause_time(self, duration, steps=1000):
-        '''get average pause time for giving variation total duration.
-
-        Args:start
-            duration (float): total duration in minutes
-
-        Returns:
-            integer : average sleep time in seconds
-        '''
-        avg_pause_time = float(duration) * 60. / steps
-        return avg_pause_time
 
 def main():
     arguments = docopt(__doc__, version='RLIEH PWM {}'.format(__version__))
