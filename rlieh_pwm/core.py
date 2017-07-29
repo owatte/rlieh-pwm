@@ -5,7 +5,7 @@
 # @Date:   2017-04-26T04:39:06-04:00
 # @Email:  owatte@ipeos.com
 # @Last modified by:   user
-# @Last modified time: 2017-07-25T10:55:21-04:00
+# @Last modified time: 2017-07-29T07:41:49-04:00
 # @License: GPLv3
 # @Copyright: IPEOS I-Solutions
 
@@ -34,9 +34,9 @@ import logging.config
 import os
 from numpy import arange
 from time import sleep
-from subprocess import call
+from subprocess import call, run, CalledProcessError, STDOUT, check_output
+import sys
 import gettext
-
 
 gettext.bindtextdomain('rlieh', 'locale')
 gettext.textdomain('rlieh')
@@ -77,13 +77,16 @@ class RliehPWM(object):
                 'basic': {
                     'format': ('%(asctime)-6s: %(name)s - '
                                '%(levelname)s - %(message)s'),
+                },
+                'short': {
+                    'format': ('[%(levelname)s]  %(message)s'),
                 }
             },
             'handlers': {
                 'console': {
                     'level': 'DEBUG',
                     'class': 'logging.StreamHandler',
-                    'formatter': 'basic',
+                    'formatter': 'short',
                 },
                 'main_file': {
                     'level': 'INFO',
@@ -126,7 +129,6 @@ class RliehPWM(object):
     @property
     def pwm(self):
         '''get pwm value for the given pin.'''
-
         self.logger.debug('pwm: {}%'.format(self.__pwm))
         return self.__pwm
 
@@ -138,30 +140,39 @@ class RliehPWM(object):
             percent : amount of power, number between 0 and 100 
             (float, 2 decimal point)
         '''
-        percent = float(percent)
-        if percent < 0:
-            logging.critical(
-                _('PWM value must be greater or equal to 0. (was {})'
-                    .format(percent))
-            )
-            raise ValueError
-        elif percent > 100:
-            logging.critical(
-                _('PWM value must be lower or equal to 100. (was {})'
-                    .format(percent))
-            )
-            raise ValueError
-        else:
-            value = round(percent / 100., 4)
-        blaster = '{0}={1}'.format(self.pin, value)
-        cmd = "echo " + blaster + " > " + self.blaster
-        # self.logger.debug('pin: {}'.format(self.pin))
-        # self.logger.debug('pwm value: {}'.format(value))
-        call(cmd, shell=True)
-        self.logger.debug('{}: {}'.format(self.blaster, blaster))
-        self.__pwm = round(value * 100, 2)
+        # percent = float(percent)
+        # logging.debug(_('set PWM to {}'.format(percent)))
+        # if percent < 0:
+        #     logging.critical(
+        #         _('PWM value must be greater or equal to 0. (was {})'
+        #             .format(percent))
+        #     )
+        #     raise ValueError
+        # elif percent > 100:
+        #     logging.critical(
+        #         _('PWM value must be lower or equal to 100. (was {})').
+        #         format(percent)
+        #     )
+        #     raise ValueError
+        # else:
+        #     value = round(percent / 100., 4)
 
-    def range_modulation(self, begin, end, duration):
+        self._blast(self._blaster_value(float(percent)))
+        self.__pwm = percent
+
+
+
+        # blaster = '{0}={1}'.format(self.pin, value)
+        # cmd = "echo " + blaster + " > " + self.blaster
+        # # self.logger.debug('pin: {}'.format(self.pin))
+        # # self.logger.debug('pwm value: {}'.format(value))
+        # call(cmd, shell=True)
+        # self.logger.debug('{}: {}'.format(self.blaster, blaster))
+        # self.__pwm = round(value * 100, 2)
+        # if self._blast(value) is True:
+        #     self.__pwm = percent
+
+    def modulate(self, begin, end, duration):
         '''Set modulation value from a range of values for a duration.
 
         Args:
@@ -184,25 +195,119 @@ class RliehPWM(object):
                       .format(end)
             raise ValueError(error_msg)
 
+        # if end > begin:
+        #     step = 0.1
+        # else:
+        #     step = -0.1
+        # end += step
+        # steps = arange(begin, end, step)
+        steps = self._steps(begin, end)
+        pause_time = self._avg_pause_time(duration, len(steps)+1)
+        for step in steps:
+            self.pwm = step
+            sleep(pause_time)
+
+    def _blast(self, value):
+        '''call pi-blaster'''
+
+        cmd = self._blaster_cmd(value)
+        # try:
+        #     run(cmd, shell=True)
+        #     self.logger.debug('{}: {}'.format(self.blaster, blaster))
+        # except:
+        # return round(value * 100, 2)
+
+        try:
+            # run(cmd, stderr=STDOUT, check=True)
+            # check_output(cmd, stderr=STDOUT)
+            # call(cmd, stderr=STDOUT)
+            call(cmd, shell=True)
+            self.logger.debug('_blast : {}'.format(value))
+
+
+            # numbers = check_output(["seq","foo", stderr=STDOUT)
+        except CalledProcessError as e:
+            error_msg = _('_blast failed, returned code {}'.format(e.returncode))
+            self.logger.critical(error_msg)
+            sys.exit(error_msg)
+        except OSError as e:
+            error_msg = _('_blast failed : {}'.format(e.strerror))
+            self.logger.critical(error_msg)
+            sys.exit(error_msg)
+
+    def _blaster_cmd(self, value):
+        '''Forge blaster command.
+
+        Args:
+            value: pi-blaster pwm value
+
+        Retruns:
+            pi-blaster command
+        '''
+
+        blaster = '{0}={1}'.format(self.pin, value)
+        cmd = "/bin/echo " + blaster + " > " + self.blaster
+        self.logger.debug(_('cmd blaster command: {}'.format(cmd)))
+        return cmd
+
+    def _blaster_value(self, percent):
+        '''convert PWM percent in pi-blaster value.
+
+        Args:
+            percent (float): PWM modulation percentage
+
+        Returns:
+            float: pi-blaster PWM value (number between 0 and 1, with 3 digits)
+        '''
+
+        if percent < 0:
+            logging.critical(
+                _('PWM value must be greater or equal to 0. (was {})'
+                    .format(percent))
+            )
+            raise ValueError
+        elif percent > 100:
+            logging.critical(
+                _('PWM value must be lower or equal to 100. (was {})').
+                format(percent)
+            )
+            raise ValueError
+        else:
+            value = round(percent / 100., 4)
+        logging.debug(_('{}% PWM = {}'.format(percent, value)))
+        return value
+
+
+    def _avg_pause_time(self, duration, steps=1000):
+        '''get average pause time for giving variation total duration.
+
+        Args:
+            duration (float): total duration in minutes
+
+        Returns:
+            integer: average sleep time in seconds
+        '''
+
+        avg_pause_time = float(duration) * 60. / steps
+        self.logger.debug(_('_avg_pause_time: {}').format(avg_pause_time))
+        return avg_pause_time
+
+    def _steps(self, begin, end):
+        '''calculates steps needed for a modulation range.
+
+        Args:
+            begin: first moduration step
+            end: last modulation step
+
+        Returns:
+            tuple: list of steps
+        '''
+
         if end > begin:
             step = 0.1
         else:
             step = -0.1
         end += step
         steps = arange(begin, end, step)
-        pause_time = self._get_avg_pause_time(duration, len(steps))
-        for step in steps[0:-1]:
-            self.pwm = step
-            sleep(pause_time)
-
-    def _get_avg_pause_time(self, duration, steps=1000):
-        '''get average pause time for giving variation total duration.
-
-        Args:start
-            duration (float): total duration in minutes
-
-        Returns:
-            integer : average sleep time in seconds
-        '''
-        avg_pause_time = float(duration) * 60. / steps
-        return avg_pause_time
+        self.logger.debug(_('_steps: {}'.format(steps)))
+        return steps
