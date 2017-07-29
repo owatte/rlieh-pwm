@@ -5,7 +5,7 @@
 # @Date:   2017-04-26T04:39:06-04:00
 # @Email:  owatte@ipeos.com
 # @Last modified by:   user
-# @Last modified time: 2017-07-29T07:41:49-04:00
+# @Last modified time: 2017-07-29T08:54:07-04:00
 # @License: GPLv3
 # @Copyright: IPEOS I-Solutions
 
@@ -34,7 +34,7 @@ import logging.config
 import os
 from numpy import arange
 from time import sleep
-from subprocess import call, run, CalledProcessError, STDOUT, check_output
+from subprocess import call, CalledProcessError, STDOUT, check_output
 import sys
 import gettext
 
