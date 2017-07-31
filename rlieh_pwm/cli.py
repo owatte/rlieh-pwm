@@ -5,7 +5,7 @@
 # @Date:   2017-04-26T04:42:30-04:00
 # @Email:  owatte@ipeos.com
 # @Last modified by:   user
-# @Last modified time: 2017-07-25T11:07:19-04:00
+# @Last modified time: 2017-07-31T05:58:43-04:00
 # @License: GPLv3
 # @Copyright: IPEOS I-Solutions
 
@@ -13,27 +13,33 @@
 """PWM management for RLIEH systems:
 
 Usage:
-  rlieh-pwm (on|off) GPIO
-  rlieh-pwm set VALUE GPIO
-  rlieh-pwm range BEGIN END --duration=<minutes> GPIO
-  rlieh-pwm fx-light (--dawn|--sunrise|--noon|--sunset|--dusk)
-           --duration=<minutes> GPIO
-  rlieh-pwm (-h | --help)
+  rlieh-pwm (on|off) GPIO [--log-level=LOG_LEVEL] [--log-path=LOG_FILE_PATH]
+  rlieh-pwm set VALUE GPIO [--log-level=LOG_LEVEL] [--log-path=LOG_FILE_PATH]
+  rlieh-pwm range BEGIN END GPIO [--duration=MINUTES] [--log-level=LOG_LEVEL]
+            [--log-path=LOG_FILE_PATH]
+  rlieh-pwm fx-light (--dawn|--sunrise|--noon|--sunset|--dusk) GPIO
+            [--duration=MINUTES] [--log-level=LOG_LEVEL]
+            [--log-path=LOG_FILE_PATH]
+  rlieh-pwm (-h |--help)
   rlieh-pwm (-v |--version)
 
 Arguments:
   GPIO        Raspberry Pi GPIO pin
   VALUE       Percent of modulation
-              minimal value = 0.01, power Off = 0, power On = 100
-  duration    Duration of effect in minutes (0.25 = 15 seconds)
+              minimal modulation = 0.01, power Off = 0, power On = 100
 
 Options:
-  -h --help
-  -v --version  verbose mode
-  --sunrise     smoothy light on, like during the sunrise
-  --sunset      smoothy light off, like during the sunset
+  -h --help                 Shows this help and exit.
+  -v --version              Shows version number.
+  --duration=MINUTES        Duration of effect in minutes.
+                            (Default value = 1.0)
+  --log-level=LOG_LEVEL     notset, critical, warning, error, info, debug.
+                            (Default value = notset)
+  --log-path=LOG_FILE_PATH  Set log file path.
+                            (Default value = /var/log/rlieh)
 
-Tip: use an alias to set a default GPIO (eg. alias light='rlieh-pwm $@ 18')
+Tip:
+  Use an alias to set a default GPIO (eg. alias light='rlieh-pwm $@ 18')
 
 RLIEH puts a roXXXing poney in your aquarium and greenhouses
 """
@@ -60,8 +66,19 @@ class MyPWM(RliehPWM):
 
 def main():
     arguments = docopt(__doc__, version='RLIEH PWM {}'.format(__version__))
-    mypwm = RliehPWM(arguments['GPIO'])
-
+    if arguments['--duration']:
+        duration = float(arguments['--duration'])
+    else:
+        duration = float(1.0)
+    if arguments['--log-level']:
+        log_level = arguments['--log-level'].lower()
+    else:
+        log_level = 'notset'
+    if arguments['--log-path']:
+        log_path = arguments['--log-path']
+    else:
+        log_path = '/var/log/rlieh'
+    mypwm = RliehPWM(arguments['GPIO'], log_level=log_level, log_path=log_path)
     if arguments['set']:
         mypwm.pwm = arguments['VALUE']
     elif arguments['on']:
@@ -71,17 +88,17 @@ def main():
     elif arguments['range']:
         mypwm.modulate(float(arguments['BEGIN']),
                        float(arguments['END']),
-                       float(arguments['--duration']))
+                       duration)
     # fx-light --dawn|--sunrise|--noon|--sunset|--dusk
     elif arguments['fx-light']:
         if arguments['--dawn']:
             mypwm.modulate(mypwm.modulation_thresholds['dawn'][0],
                            mypwm.modulation_thresholds['dawn'][1],
-                           float(arguments['--duration']))
+                           duration)
         elif arguments['--sunrise']:
             mypwm.modulate(mypwm.modulation_thresholds['sunrise'][0],
                            mypwm.modulation_thresholds['sunrise'][1],
-                           float(arguments['--duration']))
+                           duration)
         elif arguments['--noon']:
             duration = float(arguments['--duration']) / 4
             mypwm.modulate(mypwm.modulation_thresholds['noon'][0],
@@ -99,11 +116,13 @@ def main():
         elif arguments['--sunset']:
             mypwm.modulate(mypwm.modulation_thresholds['sunset'][0],
                            mypwm.modulation_thresholds['sunset'][1],
-                           float(arguments['--duration']))
+                           duration)
         elif arguments['--dusk']:
             mypwm.modulate(mypwm.modulation_thresholds['dusk'][0],
                            mypwm.modulation_thresholds['dusk'][1],
-                           float(arguments['--duration']))
+                           duration)
+        elif arguments['-v']:
+            print(__name__.__version__)
 
 
 if __name__ == '__main__':

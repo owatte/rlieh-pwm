@@ -5,7 +5,7 @@
 # @Date:   2017-04-26T04:39:06-04:00
 # @Email:  owatte@ipeos.com
 # @Last modified by:   user
-# @Last modified time: 2017-07-29T08:54:07-04:00
+# @Last modified time: 2017-07-31T05:54:03-04:00
 # @License: GPLv3
 # @Copyright: IPEOS I-Solutions
 
@@ -32,9 +32,8 @@
 import logging
 import logging.config
 import os
-from numpy import arange
 from time import sleep
-from subprocess import call, CalledProcessError, STDOUT, check_output
+from subprocess import call, CalledProcessError
 import sys
 import gettext
 
@@ -49,7 +48,6 @@ __all__ = ['RliehPWM']
 class RliehPWM(object):
     """This class manages PWM on a RLIEH system build over a Raspberry Pi .
 
-
     Attributes:
         - pin (int): Raspberry Pi's gpio used for PWM.
 
@@ -58,19 +56,29 @@ class RliehPWM(object):
     """
 
     def __init__(self, pin=18, pwm=None,
-                 log_level='DEBUG', log_path='/home/pi/log'):
+                 log_level='notset', log_path='/var/log/rlieh'):
         """Sets up the Raspberry Pi GPIOs and sets the working directory.
         Args:
             pin (int): Raspberry Pi's gpio used for PWM.
         """
 
-        # gpio numbers working with pwm using pi-blaster
-        BCM_PINS = [3, 5, 7, 8, 10, 11, 12, 13, 15, 16, 18, 19, 21, 22, 23, 24,
-                    26, 27, 28, 29, 31, 32, 33, 35, 36, 37, 38, 40]
-
         # Logger
         self.logger = logging.getLogger(__name__)
-        DEFAULT_LOGGING = {
+        LOGGING_LEVELS = {'notset': 'NOTSET', 'debug': 'DEBUG', 'info': 'INFO',
+                          'warning': 'WARNING', 'error': 'ERROR',
+                          'critical': 'CRITICAL'}
+
+        if log_level in LOGGING_LEVELS:
+            self.log_level = LOGGING_LEVELS[log_level]
+        else:
+            log_levels = ', '.join(LOGGING_LEVELS.keys())
+            raise ValueError(
+                _('Unknown log_level "{}". '
+                  'Log level should be a value in: {}.'.format(
+                    log_level, log_levels))
+            )
+
+        LOGGING = {
             'version': 1,
             'disable_existing_loggers': False,
             'formatters': {
@@ -102,20 +110,26 @@ class RliehPWM(object):
                 }
             },
             'loggers': {
-                'foo.bar': {
+                'rlieh': {
                     'handlers': ['console', 'main_file', 'error_file'],
-                    'level': log_level,
+                    'level': self.log_level,
                     'propagate': False
                 },
             },
             'root': {
                 'handlers': ['console', 'main_file', 'error_file'],
-                'level': log_level,
+                'level': self.log_level,
             }
         }
-        logging.config.dictConfig(DEFAULT_LOGGING)
+        if self.log_level is not 'NOTSET':
+            logging.config.dictConfig(LOGGING)
 
         self.blaster = '/dev/pi-blaster'
+
+        # gpio numbers working with pwm using pi-blaster
+        BCM_PINS = [3, 5, 7, 8, 10, 11, 12, 13, 15, 16, 18, 19, 21, 22, 23, 24,
+                    26, 27, 28, 29, 31, 32, 33, 35, 36, 37, 38, 40]
+
         if not(int(pin) in BCM_PINS):
             BCM_PINS = [str(bcm_pin) for bcm_pin in BCM_PINS]
             logging.critical(_('Pin number must be in : {}. (was {})'.
@@ -140,37 +154,9 @@ class RliehPWM(object):
             percent : amount of power, number between 0 and 100 
             (float, 2 decimal point)
         '''
-        # percent = float(percent)
-        # logging.debug(_('set PWM to {}'.format(percent)))
-        # if percent < 0:
-        #     logging.critical(
-        #         _('PWM value must be greater or equal to 0. (was {})'
-        #             .format(percent))
-        #     )
-        #     raise ValueError
-        # elif percent > 100:
-        #     logging.critical(
-        #         _('PWM value must be lower or equal to 100. (was {})').
-        #         format(percent)
-        #     )
-        #     raise ValueError
-        # else:
-        #     value = round(percent / 100., 4)
 
-        self._blast(self._blaster_value(float(percent)))
+        self._blast(self._convert_percent_to_blaster(float(percent)))
         self.__pwm = percent
-
-
-
-        # blaster = '{0}={1}'.format(self.pin, value)
-        # cmd = "echo " + blaster + " > " + self.blaster
-        # # self.logger.debug('pin: {}'.format(self.pin))
-        # # self.logger.debug('pwm value: {}'.format(value))
-        # call(cmd, shell=True)
-        # self.logger.debug('{}: {}'.format(self.blaster, blaster))
-        # self.__pwm = round(value * 100, 2)
-        # if self._blast(value) is True:
-        #     self.__pwm = percent
 
     def modulate(self, begin, end, duration):
         '''Set modulation value from a range of values for a duration.
@@ -190,19 +176,13 @@ class RliehPWM(object):
             error_msg = 'Range BEGIN must be greater or equal to 0. (was {})' \
                       .format(begin)
             raise ValueError(error_msg)
-        elif end > 1000:
-            error_msg = 'Range END must be lower or equal to 1000. (was {})' \
+        elif end > 100:
+            error_msg = 'Range END must be lower or equal to 100. (was {})' \
                       .format(end)
             raise ValueError(error_msg)
 
-        # if end > begin:
-        #     step = 0.1
-        # else:
-        #     step = -0.1
-        # end += step
-        # steps = arange(begin, end, step)
-        steps = self._steps(begin, end)
-        pause_time = self._avg_pause_time(duration, len(steps)+1)
+        steps = self._calc_steps(begin, end)
+        pause_time = self._calc_pause_time(duration, len(steps))
         for step in steps:
             self.pwm = step
             sleep(pause_time)
@@ -210,32 +190,29 @@ class RliehPWM(object):
     def _blast(self, value):
         '''call pi-blaster'''
 
-        cmd = self._blaster_cmd(value)
-        # try:
-        #     run(cmd, shell=True)
-        #     self.logger.debug('{}: {}'.format(self.blaster, blaster))
-        # except:
-        # return round(value * 100, 2)
+        cmd = self._build_blaster_cmd(value)
 
         try:
-            # run(cmd, stderr=STDOUT, check=True)
-            # check_output(cmd, stderr=STDOUT)
-            # call(cmd, stderr=STDOUT)
             call(cmd, shell=True)
             self.logger.debug('_blast : {}'.format(value))
-
-
-            # numbers = check_output(["seq","foo", stderr=STDOUT)
         except CalledProcessError as e:
-            error_msg = _('_blast failed, returned code {}'.format(e.returncode))
-            self.logger.critical(error_msg)
-            sys.exit(error_msg)
+            self.logger.critical(
+                _('_blast failed, returned code {}'.format(e.returncode))
+            )
+            sys.exit(
+                _('PWM modulation value {} on pin {} failed'
+                    .format(self.pin, value))
+            )
         except OSError as e:
-            error_msg = _('_blast failed : {}'.format(e.strerror))
-            self.logger.critical(error_msg)
-            sys.exit(error_msg)
+            self.logger.critical(
+                _('_blast failed {}.'.format(e.strerror))
+            )
+            sys.exit(
+                _('PWM modulation value {} on pin {} failed'
+                    .format(self.pin, value))
+            )
 
-    def _blaster_cmd(self, value):
+    def _build_blaster_cmd(self, value):
         '''Forge blaster command.
 
         Args:
@@ -250,7 +227,7 @@ class RliehPWM(object):
         self.logger.debug(_('cmd blaster command: {}'.format(cmd)))
         return cmd
 
-    def _blaster_value(self, percent):
+    def _convert_percent_to_blaster(self, percent):
         '''convert PWM percent in pi-blaster value.
 
         Args:
@@ -274,11 +251,11 @@ class RliehPWM(object):
             raise ValueError
         else:
             value = round(percent / 100., 4)
+
         logging.debug(_('{}% PWM = {}'.format(percent, value)))
         return value
 
-
-    def _avg_pause_time(self, duration, steps=1000):
+    def _calc_pause_time(self, duration, steps=1000):
         '''get average pause time for giving variation total duration.
 
         Args:
@@ -289,25 +266,37 @@ class RliehPWM(object):
         '''
 
         avg_pause_time = float(duration) * 60. / steps
-        self.logger.debug(_('_avg_pause_time: {}').format(avg_pause_time))
+        self.logger.debug(_('_calc_pause_time: {}').format(avg_pause_time))
         return avg_pause_time
 
-    def _steps(self, begin, end):
+    def _calc_steps(self, begin, end):
         '''calculates steps needed for a modulation range.
 
+        Works like the built-in range(start, stop, step) function,
+        but with float as start, stop and step vars.
+        The range end value is included as last step.
+
         Args:
-            begin: first moduration step
+            begin: first modulation step
             end: last modulation step
 
         Returns:
             tuple: list of steps
         '''
 
+        self.logger.debug(_('modulation begin: {}'.format(begin)))
+        self.logger.debug(_('modulation end: {}'.format(end)))
+        begin *= 10
+        end *= 10
         if end > begin:
-            step = 0.1
+            step = 1
+            end += 1
         else:
-            step = -0.1
-        end += step
-        steps = arange(begin, end, step)
-        self.logger.debug(_('_steps: {}'.format(steps)))
+            step = -1
+            end -= 1
+        self.logger.debug(_('range begin: {}'.format(begin)))
+        self.logger.debug(_('range end: {}'.format(end)))
+
+        steps = [x/10. for x in range(int(begin), int(end), step)]
+        self.logger.debug(_('_calc_steps: {}'.format(steps)))
         return steps
