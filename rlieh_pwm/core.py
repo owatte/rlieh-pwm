@@ -5,7 +5,7 @@
 # @Date:   2017-04-26T04:39:06-04:00
 # @Email:  owatte@ipeos.com
 # @Last modified by:   user
-# @Last modified time: 2017-07-31T05:54:03-04:00
+# @Last modified time: 2017-08-01T19:38:53-04:00
 # @License: GPLv3
 # @Copyright: IPEOS I-Solutions
 
@@ -56,18 +56,18 @@ class RliehPWM(object):
     """
 
     def __init__(self, pin=18, pwm=None,
-                 log_level='notset', log_path='/var/log/rlieh'):
+                 log_level='critical', log_path='/var/log/rlieh'):
         """Sets up the Raspberry Pi GPIOs and sets the working directory.
         Args:
             pin (int): Raspberry Pi's gpio used for PWM.
         """
 
         # Logger
-        self.logger = logging.getLogger(__name__)
-        LOGGING_LEVELS = {'notset': 'NOTSET', 'debug': 'DEBUG', 'info': 'INFO',
+        LOGGING_LEVELS = {'none': 'NOTSET', 'debug': 'DEBUG', 'info': 'INFO',
                           'warning': 'WARNING', 'error': 'ERROR',
                           'critical': 'CRITICAL'}
 
+        log_level = log_level.lower()
         if log_level in LOGGING_LEVELS:
             self.log_level = LOGGING_LEVELS[log_level]
         else:
@@ -77,7 +77,7 @@ class RliehPWM(object):
                   'Log level should be a value in: {}.'.format(
                     log_level, log_levels))
             )
-
+        self.log_path = log_path
         LOGGING = {
             'version': 1,
             'disable_existing_loggers': False,
@@ -92,21 +92,21 @@ class RliehPWM(object):
             },
             'handlers': {
                 'console': {
-                    'level': 'DEBUG',
+                    'level': self.log_level,
                     'class': 'logging.StreamHandler',
                     'formatter': 'short',
                 },
                 'main_file': {
-                    'level': 'INFO',
+                    'level': self.log_level,
                     'class': 'logging.handlers.WatchedFileHandler',
                     'formatter': 'basic',
-                    'filename': os.path.join(log_path, 'pwm.log'),
+                    'filename': os.path.join(self.log_path, 'pwm.log'),
                 },
                 'error_file': {
                     'level': 'ERROR',
                     'class': 'logging.handlers.WatchedFileHandler',
                     'formatter': 'basic',
-                    'filename': os.path.join(log_path, 'pwm_error.log'),
+                    'filename': os.path.join(self.log_path, 'pwm_error.log'),
                 }
             },
             'loggers': {
@@ -121,8 +121,9 @@ class RliehPWM(object):
                 'level': self.log_level,
             }
         }
-        if self.log_level is not 'NOTSET':
+        if self.log_level:
             logging.config.dictConfig(LOGGING)
+        self.logger = logging.getLogger(__name__)
 
         self.blaster = '/dev/pi-blaster'
 
@@ -132,9 +133,9 @@ class RliehPWM(object):
 
         if not(int(pin) in BCM_PINS):
             BCM_PINS = [str(bcm_pin) for bcm_pin in BCM_PINS]
-            logging.critical(_('Pin number must be in : {}. (was {})'.
-                               format(', '.join(BCM_PINS), str(pin))))
-            raise ValueError
+            self.logger.critical(_('Pin number must be in : {}. (was {})'.
+                                   format(', '.join(BCM_PINS), str(pin))))
+            raise ValueError(_('Bad pin value ({})'.format(str(pin))))
         else:
             self.pin = pin
             self.logger.debug('pin: {}'.format(self.pin))
@@ -238,21 +239,21 @@ class RliehPWM(object):
         '''
 
         if percent < 0:
-            logging.critical(
+            self.logger.critical(
                 _('PWM value must be greater or equal to 0. (was {})'
                     .format(percent))
             )
-            raise ValueError
+            raise ValueError(_('Bad PWM percent ({})'.format(percent)))
         elif percent > 100:
-            logging.critical(
+            self.logger.critical(
                 _('PWM value must be lower or equal to 100. (was {})').
                 format(percent)
             )
-            raise ValueError
+            raise ValueError(_('Bad PWM percent ({})'.format(percent)))
         else:
             value = round(percent / 100., 4)
 
-        logging.debug(_('{}% PWM = {}'.format(percent, value)))
+        self.logger.debug(_('{}% PWM = {}'.format(percent, value)))
         return value
 
     def _calc_pause_time(self, duration, steps=1000):
