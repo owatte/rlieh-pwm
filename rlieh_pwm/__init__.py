@@ -5,7 +5,7 @@
 # @Date:   2017-04-26T04:39:06-04:00
 # @Email:  owatte@ipeos.com
 # @Last modified by:   user
-# @Last modified time: 2017-08-09T14:48:37-04:00
+# @Last modified time: 2017-08-09T16:31:54-04:00
 # @License: GPLv3
 # @Copyright: Olivier Watté
 
@@ -36,7 +36,7 @@
 
 '''
 
-__version__ = "0.0.6"
+__version__ = "0.0.7"
 
 # from .core import RliehLeds
 # from .cli import MyLeds
