@@ -42,7 +42,7 @@ pip3 install rlieh-pwm
   >>> from rlieh_pwm.core import RliehPWM
   >>> light = RliehPWM(pin=18)
   >>> light.pwm = 0.420
-  >>> light.modulate(0.1, 80, duration=0.5))
+  >>> light.modulate(0.1, 80, duration=0.5)
 ```
 
 ### as CLI tool
