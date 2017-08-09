@@ -5,9 +5,9 @@
 # @Date:   2017-04-26T04:39:06-04:00
 # @Email:  owatte@ipeos.com
 # @Last modified by:   user
-# @Last modified time: 2017-08-02T08:09:08-04:00
+# @Last modified time: 2017-08-09T13:48:13-04:00
 # @License: GPLv3
-# @Copyright: IPEOS I-Solutions
+# @Copyright: Olivier Watté
 
 # Rlieh-pwm provides an interface to manage PWM on RLIEH systems.
 # Copyright (C) 2017 Olivier Watte
