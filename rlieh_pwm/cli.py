@@ -5,7 +5,7 @@
 # @Date:   2017-04-26T04:42:30-04:00
 # @Email:  owatte@ipeos.com
 # @Last modified by:   user
-# @Last modified time: 2017-08-09T13:48:02-04:00
+# @Last modified time: 2017-08-10T10:29:34-04:00
 # @License: GPLv3
 # @Copyright: Olivier Watté
 
@@ -76,6 +76,9 @@ PWM_THRESHOLDS = {'dawn': [0, 20],
 # default modulation range duration (in minutes)
 DURATION = 0.5
 
+# default log level
+LOG_LEVEL = 'error'
+
 
 class MyPWM(RliehPWM):
     def __init__(self, pin, pwm_thresholds=PWM_THRESHOLDS, **kwargs):
@@ -93,7 +96,7 @@ def main():
     if arguments['--log-level']:
         log_level = arguments['--log-level'].lower()
     else:
-        log_level = 'none'
+        log_level = LOG_LEVEL
     if arguments['--log-path']:
         log_path = arguments['--log-path']
     else:

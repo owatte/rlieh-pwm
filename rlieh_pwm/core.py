@@ -5,7 +5,7 @@
 # @Date:   2017-04-26T04:39:06-04:00
 # @Email:  owatte@ipeos.com
 # @Last modified by:   user
-# @Last modified time: 2017-08-09T13:48:13-04:00
+# @Last modified time: 2017-08-10T10:29:56-04:00
 # @License: GPLv3
 # @Copyright: Olivier Watté
 
@@ -81,7 +81,7 @@ class RliehPWM(object):
         """
 
         # Logger
-        LOGGING_LEVELS = {'none': 'NOTSET', 'debug': 'DEBUG', 'info': 'INFO',
+        LOGGING_LEVELS = {'debug': 'DEBUG', 'info': 'INFO',
                           'warning': 'WARNING', 'error': 'ERROR',
                           'critical': 'CRITICAL'}
 
