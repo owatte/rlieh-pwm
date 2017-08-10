@@ -5,7 +5,7 @@
 # @Date:   2017-04-26T04:39:06-04:00
 # @Email:  owatte@ipeos.com
 # @Last modified by:   user
-# @Last modified time: 2017-08-09T16:31:54-04:00
+# @Last modified time: 2017-08-10T10:59:30-04:00
 # @License: GPLv3
 # @Copyright: Olivier Watté
 
@@ -29,14 +29,13 @@
 
 
 '''
-    This class is intended to manages light in closed ecosystem, using Raspberry
-    Pi and leds.
+    This module is intendeded to provide an interface to manage PWM on RLIEH 
+    systems.
 
-    The leds intensity is modified using PWM pi-blaster interface.
+    Rlieh-pwm is a part of the RLIEH project and can be used on a Raspberry Pi.
 
+    This module relies on pi-blaster project providing
+    8 PWM channels at a 100Hz PWM frequency and 1000 PWM steps.
 '''
 
-__version__ = "0.0.7"
-
-# from .core import RliehLeds
-# from .cli import MyLeds
+__version__ = "0.0.8"
