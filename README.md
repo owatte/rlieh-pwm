@@ -1,13 +1,13 @@
 # RLIEH PWM
 
-This module is intended to provide an interface to manage PWM on RLIEH systems.
+This module is intended to provide an interface to manage PWM on RLIEH systems.
 
 Rlieh-pwm is a part of the [RLIEH project](http://www.lebiklab.com/portfolio/rlieh/)
 and can be used on a Raspberry Pi.
 
 ## Prerequisites
 
-This module relies on [pi-blaster project](https://github.com/hybridgroup/pi-blaster) providing 8 PWM channels at a 100Hz PWM frequency and 1000 PWM steps.
+This module relies on [pi-blaster project](https://github.com/hybridgroup/pi-blaster) providing 8_PWM channels at a 100Hz PWM frequency and 1000 PWM steps.
 
 ### Default supported GPIO pins
 
