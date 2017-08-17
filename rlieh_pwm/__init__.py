@@ -5,7 +5,7 @@
 # @Date:   2017-04-26T04:39:06-04:00
 # @Email:  owatte@ipeos.com
 # @Last modified by:   user
-# @Last modified time: 2017-08-10T10:59:30-04:00
+# @Last modified time: 2017-08-17T12:43:34-04:00
 # @License: GPLv3
 # @Copyright: Olivier Watté
 
@@ -29,7 +29,7 @@
 
 
 '''
-    This module is intendeded to provide an interface to manage PWM on RLIEH 
+    This module is intendeded to provide an interface to manage PWM on RLIEH
     systems.
 
     Rlieh-pwm is a part of the RLIEH project and can be used on a Raspberry Pi.
@@ -38,4 +38,4 @@
     8 PWM channels at a 100Hz PWM frequency and 1000 PWM steps.
 '''
 
-__version__ = "0.0.8"
+__version__ = "0.0.9"
