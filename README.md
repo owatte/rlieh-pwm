@@ -7,7 +7,7 @@ and can be used on a Raspberry Pi.
 
 ## Prerequisites
 
-This module relies on [pi-blaster project](https://github.com/hybridgroup/pi-blaster) providing 8_PWM channels at a 100Hz PWM frequency and 1000 PWM steps.
+This module relies on [pi-blaster project](https://github.com/sarfata/pi-blaster) providing 8_PWM channels at a 100Hz PWM frequency and 1000 PWM steps.
 
 ### Default supported GPIO pins
 
